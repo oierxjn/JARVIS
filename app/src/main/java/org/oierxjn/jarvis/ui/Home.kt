@@ -52,6 +52,8 @@ import org.oierxjn.jarvis.model.AppDataStore
 import org.oierxjn.jarvis.model.DataModel
 import org.oierxjn.jarvis.model.SettingData
 import org.oierxjn.jarvis.netapi.RemoteApi
+import org.oierxjn.jarvis.ui.components.ToastUtil.showLong
+import java.net.ConnectException
 
 enum class Destination(
     val route: String,
@@ -131,19 +133,14 @@ fun Settings(
 
     LaunchedEffect(Unit){
         if(!isRemoteLoaded){
-            val remoteHostTask = launch {
-                remoteHost = AppDataStore.getStringFlow(context, AppDataStore.REMOTE_HOST_KEY, remoteHost).first()
-            }
-            val remotePortTask = launch {
-                remotePort = AppDataStore.getIntFlow(context, AppDataStore.REMOTE_PORT_KEY, remotePort).first()
-            }
-            listOf(remoteHostTask, remotePortTask).joinAll()
+            DataModel.getRemoteSetting(context)
+            remoteHost = DataModel.remoteHost
+            remotePort = DataModel.remotePort
             isRemoteLoaded = true
         }
-    }
-    LaunchedEffect(Unit) {
         isLoading = true
         try {
+            Log.d("Settings", "[JARVIS] 从远程加载设置${remoteHost}")
             RemoteApi.getRemoteSetting({
                 aiApiEndPoint = DataModel.settingData.ai_endpoint
                 aiApiKey = DataModel.settingData.ai_api_key
@@ -151,12 +148,14 @@ fun Settings(
                 fetchDays = DataModel.settingData.fetch_days
                 napcatHost = DataModel.settingData.napcat_host
                 napcatPort = DataModel.settingData.napcat_port
-                isLoading = false
+            },{
+                throw ConnectException(it)
             })
         } catch (e: Exception) {
+            showLong(context, "网络错误：${e.message}")
             Log.e("Settings", "[JARVIS] load setting error:${e.message}", e)
-            isLoading = false
         }
+        isLoading = false
     }
 
     val lifecycleScope = LocalLifecycleOwner.current.lifecycleScope

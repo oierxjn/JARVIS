@@ -8,14 +8,30 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.supervisorScope
 
 object DataModel {
     var remoteHost = "100.79.34.39"
     var remotePort = 5000
 
     var settingData = SettingData()
+
+    suspend fun getRemoteSetting(context: Context){
+        supervisorScope {
+            val remoteHostTask = async {
+                AppDataStore.getStringFlow(context, AppDataStore.REMOTE_HOST_KEY, remoteHost).first()
+            }
+            val remotePortTask = async {
+                AppDataStore.getIntFlow(context, AppDataStore.REMOTE_PORT_KEY, remotePort).first()
+            }
+            remoteHost = remoteHostTask.await()
+            remotePort = remotePortTask.await()
+        }
+    }
 }
 
 object AppDataStore{

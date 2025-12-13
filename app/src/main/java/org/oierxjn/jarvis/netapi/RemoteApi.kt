@@ -28,10 +28,9 @@ object RemoteApi {
         onSuccessLater: (String) -> Unit = {},
         onErrorLater: (String) -> Unit = {},
     ){
+        Log.d("RemoteApi", "[JARVIS] ${baseUrl}拉取")
         fun onSuccess(json: String){
-            Log.d("RemoteApi", "[JARVIS] 从端口获取数据成功:\n${json}")
             DataModel.settingData = Json.decodeFromString<SettingData>(json)
-            Log.d("RemoteApi", "[JARVIS] 转换完成")
             onSuccessLater(json)
         }
         fun onError(e: String){
