@@ -1,15 +1,18 @@
 package org.oierxjn.jarvis.model
 
+import kotlinx.serialization.Serializable
 import org.json.JSONObject
 
 
-data object SettingData{
-    var ai_endpoint = "https://api.deepseek.com/v1/chat/completions"
-    var ai_api_key = "***"
-    var ai_model = "deepseek-chat"
-    var fetch_days = 1
-    var napcat_host = "localhost"
-    var napcat_port = 40653
+@Serializable
+data class SettingData(
+    var ai_endpoint: String = "https://api.deepseek.com/v1/chat/completions",
+    var ai_api_key: String = "***",
+    var ai_model: String = "deepseek-chat",
+    var fetch_days: Int = 1,
+    var napcat_host: String = "localhost",
+    var napcat_port: Int = 40653,
+){
 
     fun setSetting(jsonObject: JSONObject){
         ai_endpoint = jsonObject.getString("ai_endpoint")
