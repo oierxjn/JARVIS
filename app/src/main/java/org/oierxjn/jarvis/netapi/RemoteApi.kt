@@ -6,7 +6,7 @@ import org.json.JSONObject
 import org.oierxjn.jarvis.model.DataModel
 import org.oierxjn.jarvis.netapi.NetRequestApi.getRequest
 import kotlinx.serialization.json.Json
-import org.oierxjn.jarvis.model.SettingData
+import org.oierxjn.jarvis.model.AiConfig
 
 object RemoteApi {
     val baseUrl: String get() {
@@ -26,7 +26,7 @@ object RemoteApi {
 
     fun getRemoteSetting(){
         fun onSuccess(json: String){
-            DataModel.settingData = Json.decodeFromString<SettingData>(json)
+            DataModel.settingData = Json.decodeFromString<AiConfig>(json)
         }
         fun onError(e: String){
             Log.e("RemoteApi", e)

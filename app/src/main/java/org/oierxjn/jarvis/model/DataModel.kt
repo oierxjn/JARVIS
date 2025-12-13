@@ -4,5 +4,5 @@ object DataModel {
     var remoteUrl = "localhost"
     var remotePort = 5000
 
-    var settingData = SettingData()
+    var settingData = AiConfig()
 }

@@ -5,7 +5,7 @@ import org.json.JSONObject
 
 
 @Serializable
-data class SettingData(
+data class AiConfig(
     var ai_endpoint: String = "https://api.deepseek.com/v1/chat/completions",
     var ai_api_key: String = "***",
     var ai_model: String = "deepseek-chat",
@@ -14,7 +14,7 @@ data class SettingData(
     var napcat_port: Int = 40653,
 ){
 
-    fun setSetting(jsonObject: JSONObject){
+    fun setData(jsonObject: JSONObject){
         ai_endpoint = jsonObject.getString("ai_endpoint")
         ai_api_key = jsonObject.getString("ai_api_key")
         ai_model = jsonObject.getString("ai_model")
@@ -22,7 +22,7 @@ data class SettingData(
         napcat_host = jsonObject.getString("napcat_host")
         napcat_port = jsonObject.getInt("napcat_port")
     }
-    fun getSetting(): JSONObject{
+    fun getData(): JSONObject{
         val jsonObject = JSONObject().apply {
             put("ai_endpoint", ai_endpoint)
             put("ai_api_key", ai_api_key)

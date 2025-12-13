@@ -2,22 +2,30 @@ package org.oierxjn.jarvis.ui
 
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.navigation.compose.composable
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarDefaults
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -25,6 +33,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.compose.composable
 import org.oierxjn.jarvis.R
 import org.oierxjn.jarvis.ScreenBase
+import org.oierxjn.jarvis.model.DataModel
 
 enum class Destination(
     val route: String,
@@ -62,10 +71,7 @@ fun Home(
     ScreenBase(
         modifier,
     ){
-        Column {
-            Greeting("这是HOME")
-
-        }
+        Greeting("Home")
     }
 }
 
@@ -73,7 +79,33 @@ fun Home(
 fun Settings(
     modifier: Modifier = Modifier
 ) {
-    Greeting("这是Settings", modifier)
+    ScreenBase(
+        modifier,
+    ) {
+        Column {
+            Row {
+                Button({}){
+                    Text("保存")
+                }
+            }
+            Card() {
+                val innerModifier = Modifier.padding(16.dp)
+                Column (innerModifier){
+                    var aiApiEndPoint by remember { mutableStateOf(DataModel.settingData.ai_endpoint) }
+                    var aiApiKey by remember { mutableStateOf(DataModel.settingData.ai_api_key) }
+                    var aiModel by remember { mutableStateOf(DataModel.settingData.ai_model) }
+
+                    Text("AI配置")
+                    OutlinedTextField(
+                        value = aiApiEndPoint,
+                        label = { Text("AI API端点")},
+                        onValueChange = { aiApiEndPoint = it },
+                        singleLine = true,
+                    )
+                }
+            }
+        }
+    }
 }
 
 
