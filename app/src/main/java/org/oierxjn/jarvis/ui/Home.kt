@@ -28,8 +28,8 @@ enum class Destination(
     val iconResourceId: Int,
     val contentDescription: String
 ){
-    Home("home", "Home", R.drawable.home_24px, "Home"),
-    Settings("settings", "Settings", R.drawable.settings_24px, "Settings")
+    Home("home", "Home", R.drawable.home_24dp, "Home"),
+    Settings("settings", "Settings", R.drawable.settings_24dp, "Settings")
 }
 
 
@@ -53,13 +53,17 @@ fun MainHome(
 }
 
 @Composable
-fun Home() {
-    Greeting("这是HOME")
+fun Home(
+    modifier: Modifier = Modifier
+) {
+    Greeting("这是HOME", modifier)
 }
 
 @Composable
-fun Settings() {
-    Greeting("这是Settings")
+fun Settings(
+    modifier: Modifier = Modifier
+) {
+    Greeting("这是Settings", modifier)
 }
 
 
@@ -76,8 +80,8 @@ fun HomeNavHost(
         Destination.entries.forEach { destination ->
             composable(destination.route){
                 when(destination){
-                    Destination.Home -> Home()
-                    Destination.Settings -> Settings()
+                    Destination.Home -> Home(modifier)
+                    Destination.Settings -> Settings(modifier)
                 }
             }
         }
