@@ -1,8 +1,8 @@
 package org.oierxjn.jarvis.model
 
 object DataModel {
-    var remoteUrl = "localhost"
+    var remoteHost = "100.79.34.39"
     var remotePort = 5000
 
-    var settingData = AiConfig()
+    var settingData = SettingData()
 }

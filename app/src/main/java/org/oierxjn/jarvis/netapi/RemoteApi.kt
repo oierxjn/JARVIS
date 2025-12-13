@@ -6,11 +6,11 @@ import org.json.JSONObject
 import org.oierxjn.jarvis.model.DataModel
 import org.oierxjn.jarvis.netapi.NetRequestApi.getRequest
 import kotlinx.serialization.json.Json
-import org.oierxjn.jarvis.model.AiConfig
+import org.oierxjn.jarvis.model.SettingData
 
 object RemoteApi {
     val baseUrl: String get() {
-        return "${DataModel.remoteUrl}:${DataModel.remotePort}"
+        return "http://${DataModel.remoteHost}:${DataModel.remotePort}/api"
     }
 
 
@@ -24,15 +24,22 @@ object RemoteApi {
         }
     }
 
-    fun getRemoteSetting(){
+    fun getRemoteSetting(
+        onSuccessLater: (String) -> Unit = {},
+        onErrorLater: (String) -> Unit = {},
+    ){
         fun onSuccess(json: String){
-            DataModel.settingData = Json.decodeFromString<AiConfig>(json)
+            Log.d("RemoteApi", "[JARVIS] 从端口获取数据成功:\n${json}")
+            DataModel.settingData = Json.decodeFromString<SettingData>(json)
+            Log.d("RemoteApi", "[JARVIS] 转换完成")
+            onSuccessLater(json)
         }
         fun onError(e: String){
             Log.e("RemoteApi", e)
+            onErrorLater(e)
         }
         getRequest(
-            "$baseUrl/setting",
+            "$baseUrl/settings",
             { json -> onSuccess(json) },
             { e -> onError(e) }
         )
