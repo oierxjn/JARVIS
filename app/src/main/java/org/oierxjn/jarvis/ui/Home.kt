@@ -2,6 +2,7 @@ package org.oierxjn.jarvis.ui
 
 
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -23,6 +24,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -31,15 +33,22 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.launch
 import org.json.JSONObject
 import org.oierxjn.jarvis.R
 import org.oierxjn.jarvis.ScreenBase
+import org.oierxjn.jarvis.model.AppDataStore
 import org.oierxjn.jarvis.model.DataModel
 import org.oierxjn.jarvis.model.SettingData
 import org.oierxjn.jarvis.netapi.RemoteApi
@@ -103,8 +112,11 @@ fun InputBox(
 fun Settings(
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+
     var isLoading by remember { mutableStateOf(false) }
 
+    var isRemoteLoaded by rememberSaveable { mutableStateOf(false) }
     // 向远程的设置
     var remoteHost by remember { mutableStateOf(DataModel.remoteHost) }
     var remotePort by remember { mutableIntStateOf(DataModel.remotePort) }
@@ -117,18 +129,28 @@ fun Settings(
     var napcatHost by remember { mutableStateOf(DataModel.settingData.napcat_host) }
     var napcatPort by remember { mutableIntStateOf(DataModel.settingData.napcat_port) }
 
+    LaunchedEffect(Unit){
+        if(!isRemoteLoaded){
+            val remoteHostTask = launch {
+                remoteHost = AppDataStore.getStringFlow(context, AppDataStore.REMOTE_HOST_KEY, remoteHost).first()
+            }
+            val remotePortTask = launch {
+                remotePort = AppDataStore.getIntFlow(context, AppDataStore.REMOTE_PORT_KEY, remotePort).first()
+            }
+            listOf(remoteHostTask, remotePortTask).joinAll()
+            isRemoteLoaded = true
+        }
+    }
     LaunchedEffect(Unit) {
         isLoading = true
         try {
             RemoteApi.getRemoteSetting({
-                Log.d("Settings", "[JARVIS] 准备修改页面")
                 aiApiEndPoint = DataModel.settingData.ai_endpoint
                 aiApiKey = DataModel.settingData.ai_api_key
                 aiModel = DataModel.settingData.ai_model
                 fetchDays = DataModel.settingData.fetch_days
                 napcatHost = DataModel.settingData.napcat_host
                 napcatPort = DataModel.settingData.napcat_port
-                Log.d("Settings", "[JARVIS] 页面修改完成")
                 isLoading = false
             })
         } catch (e: Exception) {
@@ -136,6 +158,8 @@ fun Settings(
             isLoading = false
         }
     }
+
+    val lifecycleScope = LocalLifecycleOwner.current.lifecycleScope
 
     ScreenBase(
         modifier,
@@ -147,7 +171,22 @@ fun Settings(
             val innerModifier = Modifier.padding(10.dp).fillMaxWidth()
 
             Row {
-                Button({}){
+                Button({
+                    lifecycleScope.launch {
+                        val remoteHostTask = launch {
+                            AppDataStore.saveString(context, AppDataStore.REMOTE_HOST_KEY, remoteHost)
+                        }
+                        val remotePortTask = launch {
+                            AppDataStore.saveInt(context, AppDataStore.REMOTE_PORT_KEY, remotePort)
+                        }
+                        listOf(remoteHostTask, remotePortTask).joinAll()
+                        Toast.makeText(
+                            context.applicationContext,
+                            "保存成功",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }){
                     Text("保存")
                 }
             }

@@ -65,4 +65,5 @@ dependencies {
     implementation(libs.okhttp3.core)
 
     implementation(libs.kotlinx.serialization.json)
+    implementation(libs.androidx.datastore)
 }
