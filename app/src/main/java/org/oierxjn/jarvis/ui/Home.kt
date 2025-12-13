@@ -1,25 +1,116 @@
 package org.oierxjn.jarvis.ui
 
-import androidx.compose.foundation.layout.fillMaxSize
+
 import androidx.compose.foundation.layout.padding
+import androidx.navigation.compose.composable
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarDefaults
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
-import org.oierxjn.jarvis.ui.theme.JARVISTheme
+import androidx.compose.ui.res.painterResource
+import androidx.navigation.NavController
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.compose.composable
+import org.oierxjn.jarvis.R
+
+enum class Destination(
+    val route: String,
+    val label: String,
+    val iconResourceId: Int,
+    val contentDescription: String
+){
+    Home("home", "Home", R.drawable.home_24px, "Home"),
+    Settings("settings", "Settings", R.drawable.settings_24px, "Settings")
+}
+
+
+@Composable
+fun MainHome(
+    modifier: Modifier = Modifier
+) {
+    val navController = rememberNavController()
+//    val startDestination = Destination.Home
+
+    Scaffold(
+        modifier = modifier,
+        bottomBar = { BottomToolBar() }
+    ){ innerPadding ->
+        HomeNavHost(
+            navController,
+            startDestination = Destination.Home,
+            modifier = Modifier.padding(innerPadding)
+        )
+    }
+}
 
 @Composable
 fun Home() {
-    JARVISTheme {
-        Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-            Greeting(
-                name = "Android",
-                modifier = Modifier.padding(innerPadding)
+    Greeting("这是HOME")
+}
+
+@Composable
+fun Settings() {
+    Greeting("这是Settings")
+}
+
+
+@Composable
+fun HomeNavHost(
+    navController: NavHostController,
+    startDestination: Destination,
+    modifier: Modifier = Modifier,
+){
+    NavHost(
+        navController = navController,
+        startDestination = startDestination.route,
+    ){
+        Destination.entries.forEach { destination ->
+            composable(destination.route){
+                when(destination){
+                    Destination.Home -> Home()
+                    Destination.Settings -> Settings()
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun BottomToolBar(){
+    val selectedDestination by rememberSaveable { mutableIntStateOf(Destination.Home.ordinal) }
+
+    NavigationBar(
+        windowInsets = NavigationBarDefaults.windowInsets
+    ) {
+        Destination.entries.forEachIndexed { index, destination ->
+            NavigationBarItem(
+                selected = selectedDestination == index,
+                onClick = {},
+                icon = {
+                    Icon(
+                        painter = painterResource(destination.iconResourceId),
+                        contentDescription = destination.contentDescription,
+                    )
+                },
+                label = { Text(destination.label) }
             )
         }
     }
 }
 
+
+/**
+ * 用于测试
+ */
 @Composable
 fun Greeting(name: String, modifier: Modifier = Modifier) {
     Text(
