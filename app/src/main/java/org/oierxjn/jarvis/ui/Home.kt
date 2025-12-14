@@ -60,6 +60,7 @@ import org.oierxjn.jarvis.model.SettingData
 import org.oierxjn.jarvis.model.StatCard
 import org.oierxjn.jarvis.model.StatItem
 import org.oierxjn.jarvis.netapi.RemoteApi
+import org.oierxjn.jarvis.ui.components.M3CustomGrid
 import org.oierxjn.jarvis.ui.components.ToastUtil.showLong
 import org.oierxjn.jarvis.ui.components.ToastUtil.showShort
 
@@ -140,17 +141,14 @@ fun Home(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp, vertical = 12.dp),
         ) {
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                modifier = Modifier.fillMaxWidth().height(250.dp)
+            M3CustomGrid(
+                columns = 2,
+                items = statItems,
+                verticalSpacing = 10.dp,
+                horizontalSpacing = 8.dp,
             ) {
-                items(statItems){
-                    StatCard(it)
-                }
+                StatCard(it)
             }
-
         }
     }
 }
