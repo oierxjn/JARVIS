@@ -53,6 +53,12 @@ object DataModel {
     }
 }
 
+object LoadedFlag{
+    var isHomeLoaded = false
+    var isChatsLoaded = false
+    var isSettingsLoaded = false
+}
+
 object AppDataStore{
     private const val DATA_STORE_NAME = "app_user_preferences"
     private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(

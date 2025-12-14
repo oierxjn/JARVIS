@@ -53,6 +53,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
@@ -60,6 +61,7 @@ import org.oierxjn.jarvis.R
 import org.oierxjn.jarvis.ScreenBase
 import org.oierxjn.jarvis.model.AppDataStore
 import org.oierxjn.jarvis.model.DataModel
+import org.oierxjn.jarvis.model.LoadedFlag
 import org.oierxjn.jarvis.model.SettingData
 import org.oierxjn.jarvis.model.StatCard
 import org.oierxjn.jarvis.model.StatItem
@@ -75,8 +77,8 @@ enum class Destination(
     val contentDescription: String
 ){
     Home("home", "Home", R.drawable.home_24dp, "Home"),
+    Chats("chats", "Chats", R.drawable.chat_bubble_24dp, "Chats"),
     Settings("settings", "Settings", R.drawable.settings_24dp, "Settings"),
-    Chats("chats", "Chats", R.drawable.chat_bubble_24dp, "Chats")
 }
 
 
@@ -140,13 +142,18 @@ fun Home(
                 duration = SnackbarDuration.Short,
                 withDismissAction = true
             )
+        } catch (_: CancellationException){
+            // 大部分情况下取消的是SnackBar
         } catch (e: Exception){
             showShort(context, "设置仪表盘错误：${e.message}")
-            Log.e("MainHome", e.message ?: "未知错误")
+            Log.e("Home", "${e.message}\n类型${e.javaClass}")
         }
     }
     LaunchedEffect(Unit) {
-        reloadInternet()
+        if(!LoadedFlag.isHomeLoaded){
+            reloadInternet()
+            LoadedFlag.isHomeLoaded = true
+        }
     }
     ScreenBase(
         modifier,
@@ -157,7 +164,7 @@ fun Home(
                 verticalAlignment = Alignment.CenterVertically
             ){
                 Text(
-                    "仪表盘",
+                    "首页",
                     modifier = Modifier.padding(16.dp)
                         .weight(1f),
                     style = MaterialTheme.typography.headlineSmall,
@@ -386,6 +393,15 @@ fun Chats(
     val coroutineScope = rememberCoroutineScope()
     val snackBarHostState = remember { SnackbarHostState() }
 
+
+
+    LaunchedEffect(Unit) {
+        if(!LoadedFlag.isChatsLoaded){
+            // TODO
+            LoadedFlag.isChatsLoaded = true
+        }
+    }
+
     ScreenBase(
         modifier,
         snackBarHost = { SnackbarHost(snackBarHostState)},
@@ -415,7 +431,7 @@ fun Chats(
         }
     ) { innerPadding ->
         LazyColumn {
-
+            // TODO 首要：列表懒加载
         }
     }
 }
