@@ -54,7 +54,7 @@ object NetRequestApi {
      */
     suspend fun getRequest(
         url: String,
-        queryParams: Map<String, String?>?,
+        queryParams: Map<String, String?>? = null,
         headers: Headers = Headers.Builder().build()
     ): String {
         val baseUrl = url.toHttpUrlOrNull() ?: throw IllegalArgumentException("无效的 URL")
@@ -128,7 +128,7 @@ object NetRequestApi {
         headers: Headers = Headers.Builder().build(),
     ): String {
         // 构建 Request
-        val request = buildPostRequest(url, jsonParams, contentType)
+        val request = buildPostRequest(url, jsonParams, contentType, headers = headers)
 
         return enqueueRequest(request)
     }

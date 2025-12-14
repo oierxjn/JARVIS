@@ -3,7 +3,6 @@ package org.oierxjn.jarvis.model
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -20,7 +19,7 @@ object DataModel {
 
     var settingData = SettingData()
 
-    suspend fun getRemoteSetting(context: Context){
+    suspend fun getLocalSetting(context: Context){
         supervisorScope {
             val remoteHostTask = async {
                 AppDataStore.getStringFlow(context, AppDataStore.REMOTE_HOST_KEY, remoteHost).first()

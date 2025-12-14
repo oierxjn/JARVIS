@@ -3,7 +3,6 @@ package org.oierxjn.jarvis.ui
 
 import android.util.Log
 import android.widget.Toast
-import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -24,7 +23,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -42,10 +40,9 @@ import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
-import org.json.JSONObject
+import kotlinx.serialization.json.Json
 import org.oierxjn.jarvis.R
 import org.oierxjn.jarvis.ScreenBase
 import org.oierxjn.jarvis.model.AppDataStore
@@ -53,7 +50,6 @@ import org.oierxjn.jarvis.model.DataModel
 import org.oierxjn.jarvis.model.SettingData
 import org.oierxjn.jarvis.netapi.RemoteApi
 import org.oierxjn.jarvis.ui.components.ToastUtil.showLong
-import java.net.ConnectException
 
 enum class Destination(
     val route: String,
@@ -71,6 +67,12 @@ fun MainHome(
     modifier: Modifier = Modifier
 ) {
     val navController = rememberNavController()
+    val context = LocalContext.current
+
+    LaunchedEffect(Unit) {
+        DataModel.getLocalSetting(context)
+
+    }
 
     Scaffold(
         modifier = modifier,
@@ -131,29 +133,33 @@ fun Settings(
     var napcatHost by remember { mutableStateOf(DataModel.settingData.napcat_host) }
     var napcatPort by remember { mutableIntStateOf(DataModel.settingData.napcat_port) }
 
+    fun syncLocalSettings(){
+        remoteHost = DataModel.remoteHost
+        remotePort = DataModel.remotePort
+    }
+
+    fun syncRemoteSettings(){
+        aiApiEndPoint = DataModel.settingData.ai_endpoint
+        aiApiKey = DataModel.settingData.ai_api_key
+        aiModel = DataModel.settingData.ai_model
+        fetchDays = DataModel.settingData.fetch_days
+        napcatHost = DataModel.settingData.napcat_host
+        napcatPort = DataModel.settingData.napcat_port
+    }
+
     LaunchedEffect(Unit){
-        if(!isRemoteLoaded){
-            DataModel.getRemoteSetting(context)
-            remoteHost = DataModel.remoteHost
-            remotePort = DataModel.remotePort
-            isRemoteLoaded = true
-        }
+        syncLocalSettings()
         isLoading = true
-        try {
-            Log.d("Settings", "[JARVIS] 从远程加载设置${remoteHost}")
-            RemoteApi.getRemoteSetting({
-                aiApiEndPoint = DataModel.settingData.ai_endpoint
-                aiApiKey = DataModel.settingData.ai_api_key
-                aiModel = DataModel.settingData.ai_model
-                fetchDays = DataModel.settingData.fetch_days
-                napcatHost = DataModel.settingData.napcat_host
-                napcatPort = DataModel.settingData.napcat_port
-            },{
-                throw ConnectException(it)
-            })
-        } catch (e: Exception) {
-            showLong(context, "网络错误：${e.message}")
-            Log.e("Settings", "[JARVIS] load setting error:${e.message}", e)
+        if(!DataModel.settingData.isFetched){
+            try {
+                Log.d("Settings", "[JARVIS] 从远程加载设置${remoteHost}")
+                RemoteApi.getRemoteSetting()
+                syncRemoteSettings()
+                Log.d("Settings", "[JARVIS] ${Json.encodeToString(DataModel.settingData)}")
+            } catch (e: Exception) {
+                showLong(context, "网络错误：${e.message}")
+                Log.e("Settings", "[JARVIS] load setting error:${e.message}", e)
+            }
         }
         isLoading = false
     }
@@ -177,6 +183,22 @@ fun Settings(
                         }
                         val remotePortTask = launch {
                             AppDataStore.saveInt(context, AppDataStore.REMOTE_PORT_KEY, remotePort)
+                        }
+                        val newSettingData = SettingData(
+                            ai_endpoint = aiApiEndPoint,
+                            ai_api_key = aiApiKey,
+                            ai_model = aiModel,
+                            fetch_days = fetchDays,
+                            napcat_host = napcatHost,
+                            napcat_port = napcatPort
+                        )
+                        if(newSettingData != DataModel.settingData){
+                            DataModel.settingData = newSettingData
+                            try {
+                                RemoteApi.updateRemoteSetting()
+                            } catch (e: Exception){
+                                showLong(context, "网络错误：${e.message}")
+                            }
                         }
                         listOf(remoteHostTask, remotePortTask).joinAll()
                         Toast.makeText(

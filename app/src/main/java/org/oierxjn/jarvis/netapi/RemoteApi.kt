@@ -6,6 +6,7 @@ import org.json.JSONObject
 import org.oierxjn.jarvis.model.DataModel
 import org.oierxjn.jarvis.netapi.NetRequestApi.getRequest
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.encodeToJsonElement
 import org.oierxjn.jarvis.model.SettingData
 
 object RemoteApi {
@@ -24,23 +25,21 @@ object RemoteApi {
         }
     }
 
-    fun getRemoteSetting(
-        onSuccessLater: (String) -> Unit = {},
-        onErrorLater: (String) -> Unit = {},
-    ){
-        Log.d("RemoteApi", "[JARVIS] ${baseUrl}拉取")
-        fun onSuccess(json: String){
-            DataModel.settingData = Json.decodeFromString<SettingData>(json)
-            onSuccessLater(json)
+    suspend fun getRemoteSetting(){
+        val response = getRequest("$baseUrl/settings")
+        DataModel.settingData = Json.decodeFromString<SettingData>(response)
+        DataModel.settingData.isFetched = true
+    }
+
+    suspend fun updateRemoteSetting(){
+        val json = Json{
+            encodeDefaults = true
         }
-        fun onError(e: String){
-            Log.e("RemoteApi", e)
-            onErrorLater(e)
-        }
-        getRequest(
+        val response = NetRequestApi.postRequest(
             "$baseUrl/settings",
-            { json -> onSuccess(json) },
-            { e -> onError(e) }
+            json.encodeToString(DataModel.settingData),
+            "application/json"
         )
+        Log.d("RemoteApi", "[JARVIS] 更新设置完成：${response}")
     }
 }

@@ -1,6 +1,7 @@
 package org.oierxjn.jarvis.model
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import org.json.JSONObject
 
 
@@ -13,24 +14,9 @@ data class SettingData(
     var napcat_host: String = "localhost",
     var napcat_port: Int = 40653,
 ){
+    @Transient
+    var isFetched = false
+    @Transient
+    var needUpdate = false
 
-    fun setData(jsonObject: JSONObject){
-        ai_endpoint = jsonObject.getString("ai_endpoint")
-        ai_api_key = jsonObject.getString("ai_api_key")
-        ai_model = jsonObject.getString("ai_model")
-        fetch_days = jsonObject.getInt("fetch_days")
-        napcat_host = jsonObject.getString("napcat_host")
-        napcat_port = jsonObject.getInt("napcat_port")
-    }
-    fun getData(): JSONObject{
-        val jsonObject = JSONObject().apply {
-            put("ai_endpoint", ai_endpoint)
-            put("ai_api_key", ai_api_key)
-            put("ai_model", ai_model)
-            put("fetch_days", fetch_days)
-            put("napcat_host", napcat_host)
-            put("napcat_port", napcat_port)
-        }
-        return jsonObject
-    }
 }
