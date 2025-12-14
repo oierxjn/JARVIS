@@ -15,6 +15,6 @@ data class Chat (
 )
 
 @Serializable
-data class ChatList(
+data class ChatListModel(
     val chats: List<Chat>
 )

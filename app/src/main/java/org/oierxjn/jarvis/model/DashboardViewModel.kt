@@ -2,7 +2,6 @@ package org.oierxjn.jarvis.model
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -21,7 +20,31 @@ import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import org.oierxjn.jarvis.R
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+
+
+/**
+ * 仪表盘统计数据（对应JSON结构）
+ * @property chatsCount 监控聊天数 (JSON: chats_count)
+ * @property messagesCount 消息总数 (JSON: messages_count)
+ * @property pendingTasksCount 待办任务数 (JSON: pending_tasks_count)
+ * @property summariesCount AI总结数 (JSON: summaries_count)
+ */
+@Serializable // 核心注解：标记为可序列化
+data class DashboardStats(
+    @SerialName("chats_count") // 映射JSON的下划线字段
+    val chatsCount: Int,
+
+    @SerialName("messages_count")
+    val messagesCount: Int,
+
+    @SerialName("pending_tasks_count")
+    val pendingTasksCount: Int,
+
+    @SerialName("summaries_count")
+    val summariesCount: Int
+)
 
 data class StatItem(
     val icon: Int,
@@ -67,18 +90,25 @@ fun StatCard(item: StatItem){
 }
 
 class DashboardViewModel: ViewModel(){
-    private val _chatCount = MutableStateFlow("0")    // 监控聊天
-    private val _messageCount = MutableStateFlow("0") // 消息总数
-    private val _todoCount = MutableStateFlow("0")     // 待办任务
-    private val _aiCount = MutableStateFlow("0")       // AI总结
+    private val _chatsCount = MutableStateFlow("0")    // 监控聊天
+    private val _messagesCount = MutableStateFlow("0") // 消息总数
+    private val _pendingTasksCount = MutableStateFlow("0")     // 待办任务
+    private val _summariesCount = MutableStateFlow("0")       // AI总结
 
-    val chatCount: StateFlow<String> = _chatCount.asStateFlow()
-    val messageCount: StateFlow<String> = _messageCount.asStateFlow()
-    val todoCount: StateFlow<String> = _todoCount.asStateFlow()
-    val aiCount: StateFlow<String> = _aiCount.asStateFlow()
+    val chatsCount: StateFlow<String> = _chatsCount.asStateFlow()
+    val messagesCount: StateFlow<String> = _messagesCount.asStateFlow()
+    val pendingTasksCount: StateFlow<String> = _pendingTasksCount.asStateFlow()
+    val summariesCount: StateFlow<String> = _summariesCount.asStateFlow()
 
-    fun updateChatCount(count: String){ _chatCount.value = count }
-    fun updateMessageCount(count: String){ _messageCount.value = count }
-    fun updateTodoCount(count: String){ _todoCount.value = count }
-    fun updateAiCount(count: String){ _aiCount.value = count }
+    fun updateChatCount(count: String){ _chatsCount.value = count }
+    fun updateMessageCount(count: String){ _messagesCount.value = count }
+    fun updateTodoCount(count: String){ _pendingTasksCount.value = count }
+    fun updateAiCount(count: String){ _summariesCount.value = count }
+
+    fun syncFromDataModel(){
+        this.updateChatCount(DataModel.dashBoardStats.chatsCount.toString())
+        this.updateMessageCount(DataModel.dashBoardStats.messagesCount.toString())
+        this.updateTodoCount(DataModel.dashBoardStats.pendingTasksCount.toString())
+        this.updateAiCount(DataModel.dashBoardStats.summariesCount.toString())
+    }
 }

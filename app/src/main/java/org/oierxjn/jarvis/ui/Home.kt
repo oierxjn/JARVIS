@@ -1,18 +1,12 @@
 package org.oierxjn.jarvis.ui
 
 import android.util.Log
-import android.widget.GridView
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -20,12 +14,15 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.navigation.compose.composable
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarDefaults
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -33,12 +30,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -48,13 +45,12 @@ import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
-import kotlinx.serialization.json.Json
 import org.oierxjn.jarvis.R
 import org.oierxjn.jarvis.ScreenBase
 import org.oierxjn.jarvis.model.AppDataStore
-import org.oierxjn.jarvis.model.DashboardViewModel
 import org.oierxjn.jarvis.model.DataModel
 import org.oierxjn.jarvis.model.SettingData
 import org.oierxjn.jarvis.model.StatCard
@@ -82,7 +78,7 @@ fun MainHome(
     val navController = rememberNavController()
     val context = LocalContext.current
 
-    LaunchedEffect(Unit) {
+    suspend fun localLoad(){
         DataModel.getLocalSetting(context)
         try {
             RemoteApi.getRemoteSetting()
@@ -90,13 +86,20 @@ fun MainHome(
             showShort(context, "远程设置请求错误：${e.message}")
             Log.e("MainHome", e.message ?: "未知错误")
         }
+    }
+
+    suspend fun reloadInternet(){
         try {
             RemoteApi.getMonitoredChatList()
         } catch (e: Exception){
             showShort(context, "监控列表请求错误：${e.message}")
             Log.e("MainHome", e.message ?: "未知错误")
         }
+    }
 
+    LaunchedEffect(Unit) {
+        localLoad()
+        reloadInternet()
     }
 
     Scaffold(
@@ -114,18 +117,58 @@ fun MainHome(
 @Composable
 fun Home(
     modifier: Modifier = Modifier,
-    viewModel: DashboardViewModel = DashboardViewModel()
 ) {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+
+    suspend fun reloadInternet(){
+        try {
+            RemoteApi.getDashBoardStat()
+            DataModel.dashBoardViewModel.syncFromDataModel()
+        } catch (e: Exception){
+            showShort(context, "设置仪表盘错误：${e.message}")
+            Log.e("MainHome", e.message ?: "未知错误")
+        }
+    }
+    LaunchedEffect(Unit) {
+        reloadInternet()
+    }
     ScreenBase(
         modifier,
-    ){
+        topBar = {
+            Row (
+                Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ){
+                Text(
+                    "仪表盘",
+                    modifier = Modifier.padding(16.dp)
+                        .weight(1f),
+                    style = MaterialTheme.typography.headlineSmall,
+                )
+                IconButton(
+                    {
+                        coroutineScope.launch {
+                            reloadInternet()
+                        }
+                    },
+                    Modifier.padding(end = 0.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.refresh_24dp),
+                        contentDescription = "刷新"
+                    )
+                }
+            }
+        }
+    ){ innerPadding ->
 
         val context = LocalContext.current
 
-        val chatCount by viewModel.chatCount.collectAsState()
-        val messageCount by viewModel.messageCount.collectAsState()
-        val todoCount by viewModel.todoCount.collectAsState()
-        val aiCount by viewModel.aiCount.collectAsState()
+        val chatCount by DataModel.dashBoardViewModel.chatsCount.collectAsState()
+        val messageCount by DataModel.dashBoardViewModel.messagesCount.collectAsState()
+        val todoCount by DataModel.dashBoardViewModel.pendingTasksCount.collectAsState()
+        val aiCount by DataModel.dashBoardViewModel.summariesCount.collectAsState()
 
         val statItems = listOf(
             StatItem(R.drawable.chat_bubble_24dp, chatCount, "监控聊天", Color(0xFF4A90E2)),
@@ -139,6 +182,7 @@ fun Home(
             modifier = Modifier
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
+                .padding(innerPadding)
                 .padding(horizontal = 16.dp, vertical = 12.dp),
         ) {
             M3CustomGrid(
