@@ -3,9 +3,11 @@ package org.oierxjn.jarvis.ui
 import android.content.Context
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -312,9 +314,12 @@ fun Settings(
                 }
             }
         }
-    ) {
+    ) { innerPadding ->
         Column(
-            Modifier.padding(horizontal = 16.dp).verticalScroll(rememberScrollState()),
+            Modifier
+                .padding(horizontal = 16.dp) // 水平方向16dp内边距
+                .padding(top = innerPadding.calculateTopPadding()) // 顶部内边距，避免与TopBar重叠
+                .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             val innerModifier = Modifier.padding(10.dp).fillMaxWidth()
