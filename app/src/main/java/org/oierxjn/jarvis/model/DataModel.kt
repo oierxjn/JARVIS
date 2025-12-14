@@ -8,9 +8,12 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 
 object DataModel {
@@ -25,7 +28,7 @@ object DataModel {
 
     val dashBoardViewModel = DashboardViewModel()
     suspend fun getLocalSetting(context: Context){
-        supervisorScope {
+        coroutineScope {
             val remoteHostTask = async {
                 AppDataStore.getStringFlow(context, AppDataStore.REMOTE_HOST_KEY, remoteHost).first()
             }
@@ -34,6 +37,18 @@ object DataModel {
             }
             remoteHost = remoteHostTask.await()
             remotePort = remotePortTask.await()
+        }
+    }
+
+    suspend fun saveLocalSetting(context: Context){
+        coroutineScope {
+            val remoteHostTask = launch {
+                AppDataStore.saveString(context, AppDataStore.REMOTE_HOST_KEY, remoteHost)
+            }
+            val remotePortTask = launch {
+                AppDataStore.saveInt(context, AppDataStore.REMOTE_PORT_KEY, remotePort)
+            }
+            listOf(remotePortTask, remoteHostTask).joinAll()
         }
     }
 }

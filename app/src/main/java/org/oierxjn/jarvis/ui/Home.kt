@@ -1,5 +1,6 @@
 package org.oierxjn.jarvis.ui
 
+import android.content.Context
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
@@ -80,15 +81,15 @@ fun MainHome(
 
     suspend fun localLoad(){
         DataModel.getLocalSetting(context)
+    }
+
+    suspend fun reloadInternet(){
         try {
             RemoteApi.getRemoteSetting()
         } catch (e: Exception){
             showShort(context, "远程设置请求错误：${e.message}")
             Log.e("MainHome", e.message ?: "未知错误")
         }
-    }
-
-    suspend fun reloadInternet(){
         try {
             RemoteApi.getMonitoredChatList()
         } catch (e: Exception){
@@ -162,8 +163,6 @@ fun Home(
             }
         }
     ){ innerPadding ->
-
-        val context = LocalContext.current
 
         val chatCount by DataModel.dashBoardViewModel.chatsCount.collectAsState()
         val messageCount by DataModel.dashBoardViewModel.messagesCount.collectAsState()
@@ -246,6 +245,22 @@ fun Settings(
         napcatPort = DataModel.settingData.napcat_port
     }
 
+    suspend fun saveSettings(context: Context){
+        DataModel.saveLocalSetting(context)
+        val newSettingData = SettingData(
+            ai_endpoint = aiApiEndPoint,
+            ai_api_key = aiApiKey,
+            ai_model = aiModel,
+            fetch_days = fetchDays,
+            napcat_host = napcatHost,
+            napcat_port = napcatPort
+        )
+        if(newSettingData != DataModel.settingData){
+            DataModel.settingData = newSettingData
+            RemoteApi.updateRemoteSetting()
+        }
+    }
+
     LaunchedEffect(Unit){
         syncLocalSettings()
         isLoading = true
@@ -254,52 +269,55 @@ fun Settings(
     }
 
     val lifecycleScope = LocalLifecycleOwner.current.lifecycleScope
+    val coroutineScope = rememberCoroutineScope()
 
     ScreenBase(
         modifier,
-    ) {
-        Column(
-            Modifier.padding(16.dp).verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-            val innerModifier = Modifier.padding(10.dp).fillMaxWidth()
-
-            Row {
-                Button({
+        topBar = {
+            Row (
+                Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ){
+                Text(
+                    "设置",
+                    modifier = Modifier.padding(16.dp)
+                        .weight(1f),
+                    style = MaterialTheme.typography.headlineSmall,
+                )
+                IconButton({
                     lifecycleScope.launch {
-                        val remoteHostTask = launch {
-                            AppDataStore.saveString(context, AppDataStore.REMOTE_HOST_KEY, remoteHost)
+                        val result = try {
+                            saveSettings(context)
+                            "保存成功"
+                        } catch (e: Exception){
+                            "保存失败：${e.message}"
                         }
-                        val remotePortTask = launch {
-                            AppDataStore.saveInt(context, AppDataStore.REMOTE_PORT_KEY, remotePort)
-                        }
-                        val newSettingData = SettingData(
-                            ai_endpoint = aiApiEndPoint,
-                            ai_api_key = aiApiKey,
-                            ai_model = aiModel,
-                            fetch_days = fetchDays,
-                            napcat_host = napcatHost,
-                            napcat_port = napcatPort
-                        )
-                        if(newSettingData != DataModel.settingData){
-                            DataModel.settingData = newSettingData
-                            try {
-                                RemoteApi.updateRemoteSetting()
-                            } catch (e: Exception){
-                                showLong(context, "网络错误：${e.message}")
-                            }
-                        }
-                        listOf(remoteHostTask, remotePortTask).joinAll()
-                        Toast.makeText(
-                            context.applicationContext,
-                            "保存成功",
-                            Toast.LENGTH_SHORT
-                        ).show()
+                        showShort(context, result)
+                    }}
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.news_24dp),
+                        contentDescription = "保存",
+                    )
+                }
+                IconButton({
+                    coroutineScope.launch {
+                        syncRemoteSettings()
                     }
-                }){
-                    Text("保存")
+                }) {
+                    Icon(
+                        painter = painterResource(R.drawable.refresh_24dp),
+                        contentDescription = "刷新",
+                    )
                 }
             }
+        }
+    ) {
+        Column(
+            Modifier.padding(horizontal = 16.dp).verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            val innerModifier = Modifier.padding(10.dp).fillMaxWidth()
             Card {
                 Column (innerModifier){
                     Text("远程主机配置")
