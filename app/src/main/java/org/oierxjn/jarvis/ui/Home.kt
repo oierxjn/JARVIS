@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -74,7 +75,8 @@ enum class Destination(
     val contentDescription: String
 ){
     Home("home", "Home", R.drawable.home_24dp, "Home"),
-    Settings("settings", "Settings", R.drawable.settings_24dp, "Settings")
+    Settings("settings", "Settings", R.drawable.settings_24dp, "Settings"),
+    Chats("chats", "Chats", R.drawable.chat_bubble_24dp, "Chats")
 }
 
 
@@ -127,11 +129,17 @@ fun Home(
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+    val snackBarHostState = remember { SnackbarHostState() }
 
     suspend fun reloadInternet(){
         try {
             RemoteApi.getDashBoardStat()
             DataModel.dashBoardViewModel.syncFromDataModel()
+            snackBarHostState.showSnackbar(
+                "仪表盘刷新成功",
+                duration = SnackbarDuration.Short,
+                withDismissAction = true
+            )
         } catch (e: Exception){
             showShort(context, "设置仪表盘错误：${e.message}")
             Log.e("MainHome", e.message ?: "未知错误")
@@ -142,6 +150,7 @@ fun Home(
     }
     ScreenBase(
         modifier,
+        snackBarHost = { SnackbarHost(snackBarHostState)},
         topBar = {
             Row (
                 Modifier.fillMaxWidth(),
@@ -299,7 +308,8 @@ fun Settings(
                             saveSettings(context)
                             snackBarHostState.showSnackbar(
                                 message = "保存成功",
-                                duration = SnackbarDuration.Short
+                                duration = SnackbarDuration.Short,
+                                withDismissAction = true
                             )
                         } catch (e: Exception){
                             showShort(context, "保存失败：${e.message}")
@@ -369,6 +379,48 @@ fun Settings(
 
 
 @Composable
+fun Chats(
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    val snackBarHostState = remember { SnackbarHostState() }
+
+    ScreenBase(
+        modifier,
+        snackBarHost = { SnackbarHost(snackBarHostState)},
+        topBar = {
+            Row (
+                Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ){
+                Text(
+                    "聊天",
+                    modifier = Modifier.padding(16.dp)
+                        .weight(1f),
+                    style = MaterialTheme.typography.headlineSmall,
+                )
+                IconButton(
+                    {
+                        // TODO: 实现重新加载功能
+                    },
+                    Modifier.padding(end = 0.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.refresh_24dp),
+                        contentDescription = "刷新"
+                    )
+                }
+            }
+        }
+    ) { innerPadding ->
+        LazyColumn {
+
+        }
+    }
+}
+
+@Composable
 fun HomeNavHost(
     navController: NavHostController,
     startDestination: Destination,
@@ -383,6 +435,7 @@ fun HomeNavHost(
                 when(destination){
                     Destination.Home -> Home(modifier)
                     Destination.Settings -> Settings(modifier)
+                    Destination.Chats -> Chats(modifier)
                 }
             }
         }
