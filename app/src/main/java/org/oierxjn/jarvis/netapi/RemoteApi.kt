@@ -7,6 +7,9 @@ import org.oierxjn.jarvis.model.DataModel
 import org.oierxjn.jarvis.netapi.NetRequestApi.getRequest
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToJsonElement
+import org.oierxjn.jarvis.model.ChatList
+import org.oierxjn.jarvis.model.MessageData
+import org.oierxjn.jarvis.model.QQMessage
 import org.oierxjn.jarvis.model.SettingData
 
 object RemoteApi {
@@ -25,8 +28,23 @@ object RemoteApi {
         }
     }
 
+    suspend fun getMonitoredChatList(){
+        val url = "${baseUrl}/monitored-chats"
+        val response = getRequest(url)
+        DataModel.chatList = Json.decodeFromString<ChatList>(response)
+        Log.d("RemoteApi", "[JARVIS] 获取监控列表完成：${Json.encodeToString(DataModel.chatList)}")
+    }
+
+    suspend fun getMessageList(chatId: Int){
+        val url = "${baseUrl}/messages/${chatId}"
+        val response = getRequest(url)
+        DataModel.messagesList = Json.decodeFromString<QQMessage>(response)
+        Log.d("RemoteApi", "[JARVIS] 获取消息列表完成：${Json.encodeToString(DataModel.messagesList)}")
+    }
+
     suspend fun getRemoteSetting(){
-        val response = getRequest("$baseUrl/settings")
+        val url = "${baseUrl}/settings"
+        val response = getRequest(url)
         DataModel.settingData = Json.decodeFromString<SettingData>(response)
         DataModel.settingData.isFetched = true
     }

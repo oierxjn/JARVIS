@@ -1,13 +1,18 @@
 package org.oierxjn.jarvis.ui
 
-
 import android.util.Log
+import android.widget.GridView
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -23,6 +28,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -31,6 +37,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -46,10 +54,14 @@ import kotlinx.serialization.json.Json
 import org.oierxjn.jarvis.R
 import org.oierxjn.jarvis.ScreenBase
 import org.oierxjn.jarvis.model.AppDataStore
+import org.oierxjn.jarvis.model.DashboardViewModel
 import org.oierxjn.jarvis.model.DataModel
 import org.oierxjn.jarvis.model.SettingData
+import org.oierxjn.jarvis.model.StatCard
+import org.oierxjn.jarvis.model.StatItem
 import org.oierxjn.jarvis.netapi.RemoteApi
 import org.oierxjn.jarvis.ui.components.ToastUtil.showLong
+import org.oierxjn.jarvis.ui.components.ToastUtil.showShort
 
 enum class Destination(
     val route: String,
@@ -71,6 +83,18 @@ fun MainHome(
 
     LaunchedEffect(Unit) {
         DataModel.getLocalSetting(context)
+        try {
+            RemoteApi.getRemoteSetting()
+        } catch (e: Exception){
+            showShort(context, "远程设置请求错误：${e.message}")
+            Log.e("MainHome", e.message ?: "未知错误")
+        }
+        try {
+            RemoteApi.getMonitoredChatList()
+        } catch (e: Exception){
+            showShort(context, "监控列表请求错误：${e.message}")
+            Log.e("MainHome", e.message ?: "未知错误")
+        }
 
     }
 
@@ -88,12 +112,46 @@ fun MainHome(
 
 @Composable
 fun Home(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: DashboardViewModel = DashboardViewModel()
 ) {
     ScreenBase(
         modifier,
     ){
-        Greeting("Home")
+
+        val context = LocalContext.current
+
+        val chatCount by viewModel.chatCount.collectAsState()
+        val messageCount by viewModel.messageCount.collectAsState()
+        val todoCount by viewModel.todoCount.collectAsState()
+        val aiCount by viewModel.aiCount.collectAsState()
+
+        val statItems = listOf(
+            StatItem(R.drawable.chat_bubble_24dp, chatCount, "监控聊天", Color(0xFF4A90E2)),
+            StatItem(R.drawable.chat_24dp, messageCount, "消息总数", Color(0xFF4CAF50)),
+            StatItem(R.drawable.task_alt_24dp, todoCount, "待办任务", Color(0xFFFFB74D)),
+            StatItem(R.drawable.article_24dp, aiCount, "AI总结", Color(0xFF9C27B0))
+        )
+
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+        ) {
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier.fillMaxWidth().height(250.dp)
+            ) {
+                items(statItems){
+                    StatCard(it)
+                }
+            }
+
+        }
     }
 }
 
@@ -120,7 +178,6 @@ fun Settings(
 
     var isLoading by remember { mutableStateOf(false) }
 
-    var isRemoteLoaded by rememberSaveable { mutableStateOf(false) }
     // 向远程的设置
     var remoteHost by remember { mutableStateOf(DataModel.remoteHost) }
     var remotePort by remember { mutableIntStateOf(DataModel.remotePort) }
@@ -150,17 +207,7 @@ fun Settings(
     LaunchedEffect(Unit){
         syncLocalSettings()
         isLoading = true
-        if(!DataModel.settingData.isFetched){
-            try {
-                Log.d("Settings", "[JARVIS] 从远程加载设置${remoteHost}")
-                RemoteApi.getRemoteSetting()
-                syncRemoteSettings()
-                Log.d("Settings", "[JARVIS] ${Json.encodeToString(DataModel.settingData)}")
-            } catch (e: Exception) {
-                showLong(context, "网络错误：${e.message}")
-                Log.e("Settings", "[JARVIS] load setting error:${e.message}", e)
-            }
-        }
+        syncRemoteSettings()
         isLoading = false
     }
 
@@ -215,7 +262,7 @@ fun Settings(
                 Column (innerModifier){
                     Text("远程主机配置")
                     InputBox(remoteHost, "主机地址", { remoteHost = it })
-                    InputBox(remotePort.toString(), "端口", { remotePort = it.toInt() })
+                    InputBox(remotePort.toString(), "端口", { remotePort = it.toIntOrNull() ?: 0 })
                 }
             }
             if(isLoading){
@@ -232,14 +279,14 @@ fun Settings(
             Card {
                 Column (innerModifier){
                     Text("默认配置")
-                    InputBox(fetchDays.toString(), "默认获取天数", { fetchDays = it.toInt() })
+                    InputBox(fetchDays.toString(), "默认获取天数", { fetchDays = it.toIntOrNull()?:0 })
                 }
             }
             Card {
                 Column (innerModifier){
                     Text("远端主机上的NapCat-QCE配置")
                     InputBox(napcatHost, "主机地址", { napcatHost = it })
-                    InputBox(napcatPort.toString(), "端口", { napcatPort = it.toInt() })
+                    InputBox(napcatPort.toString(), "端口", { napcatPort = it.toIntOrNull()?: 0 })
                 }
             }
         }

@@ -19,6 +19,9 @@ object DataModel {
 
     var settingData = SettingData()
 
+    lateinit var messagesList: QQMessage
+    lateinit var chatList: ChatList
+
     suspend fun getLocalSetting(context: Context){
         supervisorScope {
             val remoteHostTask = async {
