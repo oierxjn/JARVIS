@@ -24,6 +24,10 @@ import androidx.compose.material3.NavigationBarDefaults
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -221,6 +225,8 @@ fun Settings(
 
     var isLoading by remember { mutableStateOf(false) }
 
+    val snackBarHostState = remember { SnackbarHostState() }
+
     // 向远程的设置
     var remoteHost by remember { mutableStateOf(DataModel.remoteHost) }
     var remotePort by remember { mutableIntStateOf(DataModel.remotePort) }
@@ -275,6 +281,7 @@ fun Settings(
 
     ScreenBase(
         modifier,
+        snackBarHost = { SnackbarHost(snackBarHostState)},
         topBar = {
             Row (
                 Modifier.fillMaxWidth(),
@@ -288,13 +295,15 @@ fun Settings(
                 )
                 IconButton({
                     lifecycleScope.launch {
-                        val result = try {
+                        try {
                             saveSettings(context)
-                            "保存成功"
+                            snackBarHostState.showSnackbar(
+                                message = "保存成功",
+                                duration = SnackbarDuration.Short
+                            )
                         } catch (e: Exception){
-                            "保存失败：${e.message}"
+                            showShort(context, "保存失败：${e.message}")
                         }
-                        showShort(context, result)
                     }}
                 ) {
                     Icon(
