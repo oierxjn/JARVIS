@@ -31,3 +31,14 @@ data class friendInfo(
     val uid: String = "",
     val uin: String = "",
 )
+
+data class groupInfo(
+    @SerialName("group_code")
+    val groupCode: String = "",
+    @SerialName("group_name")
+    val groupName: String = "",
+    @SerialName("max_number")
+    val maxNumber: Int = 0,
+    @SerialName("member_count")
+    val memberCount: Int = 0,
+)

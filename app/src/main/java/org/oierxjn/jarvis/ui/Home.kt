@@ -5,9 +5,11 @@ import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -67,6 +69,7 @@ import org.oierxjn.jarvis.model.StatCard
 import org.oierxjn.jarvis.model.StatItem
 import org.oierxjn.jarvis.netapi.RemoteApi
 import org.oierxjn.jarvis.ui.components.M3CustomGrid
+import org.oierxjn.jarvis.ui.components.SemiModalSheet
 import org.oierxjn.jarvis.ui.components.ToastUtil.showLong
 import org.oierxjn.jarvis.ui.components.ToastUtil.showShort
 import androidx.compose.foundation.lazy.items
@@ -425,6 +428,15 @@ fun Chats(
                         .weight(1f),
                     style = MaterialTheme.typography.headlineSmall,
                 )
+                IconButton(
+                    {},
+                    Modifier.padding(end = 0.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.add_24dp),
+                        contentDescription = "添加监控"
+                    )
+                }
                 IconButton(
                     {
                         // TODO: 实现重新加载功能

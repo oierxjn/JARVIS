@@ -1,15 +1,19 @@
 package org.oierxjn.jarvis.netapi
 
 import android.util.Log
+import kotlinx.serialization.Serializable
 import okio.IOException
 import org.json.JSONObject
 import org.oierxjn.jarvis.model.DataModel
 import org.oierxjn.jarvis.netapi.NetRequestApi.getRequest
 import kotlinx.serialization.json.Json
+import org.json.JSONArray
+import org.json.JSONException
 import org.oierxjn.jarvis.model.ChatListModel
 import org.oierxjn.jarvis.model.DashboardStats
 import org.oierxjn.jarvis.model.QQMessage
 import org.oierxjn.jarvis.model.SettingData
+import org.oierxjn.jarvis.model.friendInfo
 
 object RemoteApi {
     val baseUrl: String get() {
@@ -17,14 +21,15 @@ object RemoteApi {
     }
 
 
-    fun processJson(json: String): JSONObject?{
-        return try {
-            val jsonObject = JSONObject(json)
-            return jsonObject
-        } catch (e: IOException){
+    fun processJson(json: String): JSONObject{
+        val jsonObject: JSONObject
+        try {
+            jsonObject = JSONObject(json)
+        } catch (e: JSONException){
             Log.e("RemoteApi", e.message ?: "未知错误")
-            null
+            throw JSONException(e)
         }
+        return jsonObject
     }
 
     /**
@@ -41,6 +46,14 @@ object RemoteApi {
      */
     suspend fun getAvailableChats(){
         val url = "${baseUrl}/available-chats"
+        val response = getRequest(url)
+        val json = processJson(response)
+
+        val friendList: JSONArray = json.getJSONArray("friends")
+        val groupList: JSONArray = json.getJSONArray("groups")
+        DataModel.availableFriendInfoList = Json.decodeFromString(friendList.toString())
+        DataModel.availableGroupInfoList = Json.decodeFromString(groupList.toString())
+        Log.d("RemoteApi", "[JARVIS] 获取可用聊天列表完成")
     }
 
 

@@ -24,6 +24,9 @@ object DataModel {
 
     lateinit var messagesList: QQMessage
     lateinit var chatListModel: ChatListModel
+    lateinit var availableFriendInfoList: List<friendInfo>
+    lateinit var availableGroupInfoList: List<groupInfo>
+
     lateinit var dashBoardStats: DashboardStats
 
     val dashBoardViewModel = DashboardViewModel()
