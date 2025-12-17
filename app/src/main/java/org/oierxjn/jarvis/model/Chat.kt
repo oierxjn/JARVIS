@@ -20,3 +20,14 @@ data class ChatListModel(
 )
 
 val ChatType = mapOf(1 to "私聊", 2 to "群聊")
+
+@Serializable
+data class friendInfo(
+    @SerialName("is_online")
+    val isOnline: Boolean = false,
+    val name: String = "",
+    val nick: String = "",
+    val remark: String = "",
+    val uid: String = "",
+    val uin: String = "",
+)

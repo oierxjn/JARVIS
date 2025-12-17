@@ -396,6 +396,13 @@ fun Chats(
     val snackBarHostState = remember { SnackbarHostState() }
 
 
+    suspend fun reloadInternet(){
+        try {
+
+        } catch (e: Exception){
+
+        }
+    }
 
     LaunchedEffect(Unit) {
         if(!LoadedFlag.isChatsLoaded){
@@ -450,7 +457,6 @@ fun Chats(
                     ){
                         Column (
                             Modifier
-                                .background(Color.Red.copy(alpha = 0.2f))
                         ){
                             Text(chat.name)
                             Text(ChatType[chat.chat_type] ?: "未知类型")
