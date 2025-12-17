@@ -11,10 +11,12 @@ data class Chat (
     val name: String,
     val enabled: Boolean,
     @SerialName("last_fetch_time")
-    val lastFetchTime: String
+    val lastFetchTime: String?
 )
 
 @Serializable
 data class ChatListModel(
     val chats: List<Chat>
 )
+
+val ChatType = mapOf(1 to "私聊", 2 to "群聊")

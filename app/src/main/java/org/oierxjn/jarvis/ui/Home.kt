@@ -69,6 +69,8 @@ import org.oierxjn.jarvis.netapi.RemoteApi
 import org.oierxjn.jarvis.ui.components.M3CustomGrid
 import org.oierxjn.jarvis.ui.components.ToastUtil.showLong
 import org.oierxjn.jarvis.ui.components.ToastUtil.showShort
+import androidx.compose.foundation.lazy.items
+import org.oierxjn.jarvis.model.ChatType
 
 enum class Destination(
     val route: String,
@@ -430,8 +432,32 @@ fun Chats(
             }
         }
     ) { innerPadding ->
-        LazyColumn {
-            // TODO 首要：列表懒加载
+        LazyColumn(
+            Modifier
+                .padding(innerPadding)
+                .padding(horizontal = 16.dp) // 水平方向16dp内边距
+        ) {
+            items(DataModel.chatListModel.chats){ chat ->
+                Card(
+                    Modifier
+                        .padding(vertical = 5.dp)
+                        .fillMaxWidth()) {
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                            ,
+                    ){
+                        Column (
+                            Modifier
+                                .background(Color.Red.copy(alpha = 0.2f))
+                        ){
+                            Text(chat.name)
+                            Text(ChatType[chat.chat_type] ?: "未知类型")
+                        }
+                    }
+                }
+            }
         }
     }
 }
