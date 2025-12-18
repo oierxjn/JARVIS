@@ -27,14 +27,18 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.consumePositionChange
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.IntOffset
@@ -105,6 +109,7 @@ fun SemiModalSheet(
                         .padding(vertical = 8.dp),
                     contentAlignment = Alignment.Center
                 ) {
+                    var dragOffset by remember { mutableFloatStateOf(0f) }
                     // 拖动手柄
                     Box(
                         modifier = Modifier
@@ -114,6 +119,21 @@ fun SemiModalSheet(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
                                 shape = RoundedCornerShape(2.dp)
                             )
+                            .pointerInput(Unit) {
+                                detectDragGestures(
+                                    onDrag = { change, dragAmount ->
+                                        if (change.positionChange() != Offset.Zero) change.consume()
+                                        dragOffset += dragAmount.y
+                                    },
+                                    onDragEnd = {
+                                        if (dragOffset > 0.8f) {
+                                            onDismiss()
+                                        }else {
+                                            dragOffset = 0f
+                                        }
+                                    }
+                                )
+                            }
                     )
 
                     // 关闭按钮
