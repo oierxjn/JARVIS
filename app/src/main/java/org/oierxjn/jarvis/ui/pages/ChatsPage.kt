@@ -27,6 +27,7 @@ import org.oierxjn.jarvis.ScreenBase
 import org.oierxjn.jarvis.model.ChatType
 import org.oierxjn.jarvis.model.DataModel
 import org.oierxjn.jarvis.model.LoadedFlag
+import org.oierxjn.jarvis.netapi.RemoteApi
 import org.oierxjn.jarvis.ui.components.ToastUtil.showShort
 
 @Composable
@@ -40,9 +41,9 @@ fun ChatsPage(
 
     suspend fun reloadInternet(){
         try {
-
+            RemoteApi.getMonitoredChatList()
         } catch (e: Exception){
-
+            showShort(context, "无法获取聊天列表:${e.message}")
         }
     }
 
@@ -68,7 +69,8 @@ fun ChatsPage(
                     style = MaterialTheme.typography.headlineSmall,
                 )
                 IconButton(
-                    {},
+                    {
+                    },
                     Modifier.padding(end = 0.dp)
                 ) {
                     Icon(
@@ -78,7 +80,10 @@ fun ChatsPage(
                 }
                 IconButton(
                     {
-                        // TODO: 实现重新加载功能
+                        coroutineScope.launch {
+                            reloadInternet()
+                            snackBarHostState.showSnackbar("聊天列表已刷新")
+                        }
                     },
                     Modifier.padding(end = 0.dp)
                 ) {
